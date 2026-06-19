@@ -329,6 +329,7 @@ def page_html(page):
 <title>{esc(page['title'])}</title>
 <meta name="description" content="{esc(page['desc'])}">
 <meta name="keywords" content="{esc(kw)}">
+<meta name="naver-site-verification" content="deeefa9fb53f1a6d805eb4c64d40cf5add6a10f4">
 <link rel="canonical" href="{esc(canonical)}">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta property="og:type" content="website">
