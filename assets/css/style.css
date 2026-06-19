@@ -219,6 +219,45 @@ ul { color: var(--color-ink-2); }
 .info-table th { background: var(--color-surface-2); width: 38%; color: var(--color-ink); font-weight: 700; }
 .info-table tr:last-child th, .info-table tr:last-child td { border-bottom: none; }
 
+/* ---------- Pricing (코스별 기본 요금) ---------- */
+.pricing {
+  background:
+    radial-gradient(900px 400px at 85% -20%, rgba(194,162,92,0.20), transparent 60%),
+    linear-gradient(160deg, #16332b 0%, #1f5042 100%);
+  border: 1px solid rgba(194,162,92,0.28);
+  border-radius: var(--radius-lg); padding: var(--space-8) var(--space-6);
+  color: #f4efe3; margin: var(--space-6) 0;
+}
+.pricing-head { text-align: center; max-width: 56ch; margin: 0 auto var(--space-6); }
+.pricing-head h2 { color: #fff; margin: 0 0 var(--space-2); }
+.pricing-head p { color: rgba(244,239,227,0.82); margin: 0; }
+.pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); align-items: stretch; }
+.price-card {
+  position: relative; background: rgba(255,255,255,0.045); border: 1px solid rgba(244,239,227,0.16);
+  border-radius: var(--radius); padding: var(--space-6) var(--space-5);
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-2);
+}
+.price-card.is-featured {
+  border-color: var(--color-accent); background: rgba(194,162,92,0.10);
+  box-shadow: 0 0 0 1px rgba(194,162,92,0.45), var(--shadow-lg);
+}
+.price-card h3 { color: #f4efe3; font-size: var(--fs-lg); margin: 0; font-weight: 700; }
+.price-amount { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); letter-spacing: -0.02em; line-height: 1.1; }
+.price-amount .won { font-size: 1rem; font-weight: 600; color: rgba(244,239,227,0.75); margin-left: 3px; }
+.price-min { color: rgba(194,162,92,0.9); font-weight: 700; font-size: var(--fs-sm); }
+.price-desc { color: rgba(244,239,227,0.72); font-size: var(--fs-sm); margin: 0; min-height: 2.6em; }
+.price-card .btn { width: 100%; margin-top: var(--space-3); }
+.price-badge {
+  position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+  background: var(--color-accent); color: #2a2110; font-weight: 800; font-size: var(--fs-xs);
+  padding: 5px 16px; border-radius: var(--radius-pill); letter-spacing: .04em;
+}
+.price-btn-outline { background: transparent; color: var(--color-accent) !important; border: 1px solid rgba(194,162,92,0.55); }
+.price-btn-outline:hover { background: rgba(194,162,92,0.14); color: var(--color-accent) !important; }
+.pricing-note { text-align: center; margin: var(--space-5) 0 0; color: rgba(244,239,227,0.72); font-size: var(--fs-sm); }
+.pricing-note a { color: var(--color-accent); font-weight: 700; }
+@media (max-width: 760px) { .pricing-grid { grid-template-columns: 1fr; } .pricing { padding: var(--space-6) var(--space-4); } }
+
 /* ---------- FAQ ---------- */
 .faq { display: grid; gap: var(--space-3); }
 .faq details {
