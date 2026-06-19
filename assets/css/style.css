@@ -181,6 +181,12 @@ ul { color: var(--color-ink-2); }
 .btn--outline:hover { background: rgba(255,255,255,0.12); }
 .btn--primary { background: var(--color-primary); color: #fff !important; }
 .btn--primary:hover { background: var(--color-primary-700); }
+.btn--orange { background: #e8730f; color: #fff !important; box-shadow: var(--shadow-sm); }
+.btn--orange:hover { background: #cf6109; color: #fff !important; }
+
+/* 푸터 문의 버튼 그룹 */
+.footer-cta { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-5); }
+.footer-cta .btn { padding: 12px 20px; font-size: var(--fs-sm); }
 
 /* ---------- Cards / Grid ---------- */
 .grid { display: grid; gap: var(--space-5); }
