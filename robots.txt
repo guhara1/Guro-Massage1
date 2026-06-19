@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://baro-go-guro.example/sitemap.xml
