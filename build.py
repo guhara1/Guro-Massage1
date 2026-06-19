@@ -15,8 +15,8 @@ SITE = {
     "brand_full": "바로GO 구로구 출장마사지",
     "phone": "0508-202-4719",
     "phone_tel": "0508-202-4719",
-    "base": "https://baro-go-guro.example",  # 배포 도메인으로 교체
-    "main_url": "/seoul/guro-gu-chuljangmassage/",
+    "base": "https://guro-massage1.pages.dev",  # 배포 도메인
+    "main_url": "/",
     "og_image": "/assets/img/og-cover.svg",
     "hours": "오전 11시 ~ 익일 오전 5시 (연중무휴)",
     "pay": "현장 결제 (현금·계좌이체), 카드 결제는 사전 문의",
@@ -1618,16 +1618,12 @@ def build():
     with open(os.path.join(OUT, "robots.txt"), "w", encoding="utf-8") as f:
         f.write("User-agent: *\nAllow: /\n\n"
                 f"Sitemap: {SITE['base']}/sitemap.xml\n")
-    # 루트 index.html → 메인으로 리다이렉트
-    redirect = (f'<!doctype html><html lang="ko"><head><meta charset="utf-8">'
-                f'<title>바로GO 구로구 출장마사지</title>'
-                f'<link rel="canonical" href="{SITE["base"]}{SITE["main_url"]}">'
-                f'<meta http-equiv="refresh" content="0; url={SITE["main_url"]}">'
-                f'</head><body>구로구 출장마사지 안내로 이동합니다. '
-                f'<a href="{SITE["main_url"]}">바로가기</a></body></html>\n')
-    with open(os.path.join(OUT, "index.html"), "w", encoding="utf-8") as f:
-        f.write(redirect)
-    print(f"생성 완료: {len(PAGES)} 페이지 + sitemap.xml + robots.txt + index.html")
+    # 메인 페이지는 루트(/)에서 생성되므로 루트 index.html은 곧 메인입니다.
+    # 예전 메인 경로(/seoul/guro-gu-chuljangmassage/)는 루트로 301 리다이렉트(Cloudflare Pages _redirects)
+    with open(os.path.join(OUT, "_redirects"), "w", encoding="utf-8") as f:
+        f.write("/seoul/guro-gu-chuljangmassage/    /    301\n"
+                "/seoul/guro-gu-chuljangmassage     /    301\n")
+    print(f"생성 완료: {len(PAGES)} 페이지(메인=/) + sitemap.xml + robots.txt + _redirects")
 
 if __name__ == "__main__":
     build()
