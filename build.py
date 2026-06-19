@@ -157,8 +157,45 @@ def render_footer():
   <span class="dot" aria-hidden="true"></span><span class="label">전화예약 {SITE['phone']}</span>
 </a>"""
 
+# --- 코스별 기본 요금 ---
+def render_pricing():
+    tel = SITE["phone_tel"]
+    return f"""<section class="pricing" aria-label="코스별 기본 요금">
+  <div class="pricing-head">
+    <h2>코스별 기본 요금</h2>
+    <p>60·90·120분 코스별 기본 요금입니다. 숨겨진 추가 비용 없이 투명하게 안내합니다.</p>
+  </div>
+  <div class="pricing-grid">
+    <div class="price-card">
+      <h3>60분 코스</h3>
+      <div class="price-amount">90,000<span class="won">원</span></div>
+      <div class="price-min">60분</div>
+      <p class="price-desc">기본 컨디션·릴랙스 케어</p>
+      <a class="btn price-btn-outline" href="tel:{tel}">예약 문의</a>
+    </div>
+    <div class="price-card is-featured">
+      <span class="price-badge">추천</span>
+      <h3>90분 코스</h3>
+      <div class="price-amount">150,000<span class="won">원</span></div>
+      <div class="price-min">90분</div>
+      <p class="price-desc">아로마 포함 추천 구성</p>
+      <a class="btn btn--gold" href="tel:{tel}">예약 문의</a>
+    </div>
+    <div class="price-card">
+      <h3>120분 코스</h3>
+      <div class="price-amount">180,000<span class="won">원</span></div>
+      <div class="price-min">120분</div>
+      <p class="price-desc">전신 집중 프리미엄 케어</p>
+      <a class="btn price-btn-outline" href="tel:{tel}">예약 문의</a>
+    </div>
+  </div>
+  <p class="pricing-note">지역·예약 시간대·이동 거리에 따라 상담 시 최종 확인됩니다. <a href="/seoul/guro/reservation/">상세 요금 안내 보기 →</a></p>
+</section>"""
+
 # --- 본문 블록 렌더 ---
 def block(b):
+    if b[0] == "pricing":
+        return render_pricing()
     kind = b[0]
     if kind == "h2":
         return f"<h2>{esc(b[1])}</h2>"
@@ -399,6 +436,8 @@ PAGES.append({
         ("p", "구로구 출장마사지를 찾는 분들은 보통 현재 위치에서 가까운 방문 가능 지역을 먼저 확인합니다. 구로구는 서울 서남권에 있는 지역으로, 신도림역과 구로역을 중심으로 한 교통 생활권, 구로디지털단지역과 남구로역 주변의 업무·상업 생활권, 고척동과 개봉동의 주거 생활권, 오류동·천왕동·온수동·항동으로 이어지는 서남부 주거권이 함께 있습니다. 바로GO는 이 모든 생활권의 방문 기준을 페이지별로 나누어 안내합니다."),
         ("notice", f'예약·상담은 전화가 가장 빠릅니다. <strong><a href="tel:{SITE["phone_tel"]}">전화예약 {SITE["phone"]}</a></strong> · 운영시간 {SITE["hours"]}', "info"),
 
+        ("pricing",),
+
         ("h2", "신도림·구로디지털단지·개봉·오류 생활권의 차이"),
         ("p", "구로구는 지역마다 분위기와 이동 환경이 다릅니다. 신도림은 1·2호선이 만나는 환승 교통권으로 호텔·오피스가 많고, 구로디지털단지는 IT·벤처 기업이 모인 업무지구입니다. 고척동과 개봉동은 안양천을 낀 조용한 주거권이며, 오류동·수궁동·항동은 아파트 단지가 넓게 자리한 서남부 주거권입니다. 같은 구로구라도 위치에 따라 방문 동선과 이동 시간이 달라지므로, 현재 위치와 가까운 지역 안내를 먼저 확인하시면 편리합니다."),
 
@@ -477,6 +516,7 @@ def content_page(url, title, desc, h1, eyebrow, hero_sub, crumbs, keywords,
     blocks = []
     blocks += intro_blocks
     blocks.append(CALL_BLOCK)
+    blocks.append(("pricing",))
     blocks += mid_blocks
     blocks += trust_blocks(region)
     if faq:
@@ -1398,6 +1438,7 @@ PAGES.append({
         ("h2", "예약 가능 지역 확인"),
         ("p", "바로GO는 서울 구로구 전 지역을 방문합니다. 신도림·구로동·구로디지털단지처럼 교통 접근성이 좋은 지역은 이동이 빠르고, 항동·수궁동·천왕동 등 서남부 외곽은 이동 시간이 더 걸릴 수 있습니다. 정확한 위치(동·단지·건물)를 알려주시면 방문 가능 여부와 예상 이동 시간을 안내해 드립니다."),
         CALL_BLOCK,
+        ("pricing",),
         ("h2", "예약 가능 시간 안내"),
         ("p", f"운영시간은 {SITE['hours']}입니다. 예약이 몰리는 시간대에는 대기가 발생할 수 있어, 희망 시간보다 여유 있게 문의해 주시면 원활하게 안내해 드립니다."),
         ("h2", "추가 이동비 안내"),
