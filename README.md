@@ -45,3 +45,44 @@ python3 build.py
 
 > 배포 도메인은 `build.py`의 `SITE["base"]` 값을 실제 도메인으로 교체한 뒤 다시 빌드하면
 > canonical·OG·sitemap의 절대 URL이 일괄 반영됩니다.
+
+## 색인(인덱싱) 셋업
+
+빌드 시 다음 파일이 자동 생성됩니다.
+
+| 파일 | 용도 |
+|------|------|
+| `sitemap.xml` | 사이트맵 (lastmod 포함) |
+| `rss.xml` | RSS 2.0 피드 (head에 `alternate` 링크 연결) |
+| `robots.txt` | 구글·네이버(Yeti)·빙 허용 + 사이트맵/RSS 명시 |
+| `<indexnow_key>.txt` | IndexNow 키 파일 (루트에 위치) |
+| `urls.txt` | 전체 URL 목록 (통보 스크립트 입력) |
+
+### 검색엔진 등록 (최초 1회, 가장 빠른 색인 경로)
+1. **구글 Search Console** → 사이트 속성 추가 → `sitemap.xml` 제출
+2. **네이버 서치어드바이저** → 사이트 등록(소유확인: head의 `naver-site-verification` 태그 사용) → `sitemap.xml`·`rss.xml` 제출
+3. **빙 Webmaster Tools** → 사이트 추가 → 사이트맵 제출 (IndexNow 자동 연동)
+
+### IndexNow — 글 올릴 때마다 즉시 통보 (빙·네이버·얀덱스)
+키 파일이 배포된 뒤(`https://<도메인>/<key>.txt` 접근 가능) 실행하세요.
+
+```bash
+python build.py            # 변경 반영 + urls.txt 갱신
+python tools/indexnow.py   # 전체 URL 즉시 통보 (빙·네이버·얀덱스)
+# 특정 URL만:
+python tools/indexnow.py https://guro-massage1.pages.dev/seoul/guro/guro-dong-chuljangmassage/
+```
+
+> IndexNow 키는 `build.py`의 `SITE["indexnow_key"]` 와 `tools/indexnow.py`의 `KEY` 가 동일해야 합니다.
+
+### 구글 Indexing API (선택 — 구글은 IndexNow 미참여)
+```bash
+pip install google-auth requests
+export GOOGLE_INDEXING_SA=/path/to/service-account.json
+python tools/google_indexing.py            # urls.txt 전체 통보
+```
+사전 준비: Google Cloud에서 Indexing API 사용 설정 → 서비스 계정 생성 →
+Search Console 속성에 서비스 계정을 '소유자'로 추가. 자세한 내용은 `tools/google_indexing.py` 상단 주석 참고.
+
+> 참고: 구글·빙의 **sitemap ping 엔드포인트는 2023~2024년에 종료**되었습니다.
+> 따라서 즉시 색인은 IndexNow(빙·네이버)와 구글 Indexing API/Search Console 사이트맵 제출로 처리합니다.

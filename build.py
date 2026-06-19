@@ -5,7 +5,7 @@
 - 공통 셸(헤더/푸터/CSS) + 페이지별 고유 본문(중복 콘텐츠 방지)
 - Schema: WebPage, BreadcrumbList, Organization, ImageObject
 """
-import os, html, json
+import os, html, json, datetime
 
 # ----------------------------------------------------------------------------
 # 사이트 공통 설정
@@ -22,6 +22,7 @@ SITE = {
     "pay": "현장 결제 (현금·계좌이체), 카드 결제는 사전 문의",
     "cancel": "예약 시간 1시간 전까지 무료 변경·취소 / 이후 이동 시작 시 이동비 발생 가능",
     "area": "서울 구로구 전 지역 방문 (지역별 이동 시간 상이)",
+    "indexnow_key": "a3f1c9d2e4b6478894c0a5f3e21d7b6c",  # IndexNow 키 (빙·네이버 즉시 색인)
 }
 OUT = os.path.dirname(os.path.abspath(__file__))
 
@@ -343,6 +344,7 @@ def page_html(page):
 <meta name="twitter:title" content="{esc(page['title'])}">
 <meta name="twitter:description" content="{esc(page['desc'])}">
 <meta name="twitter:image" content="{esc(SITE['base'] + SITE['og_image'])}">
+<link rel="alternate" type="application/rss+xml" title="{esc(SITE['brand_full'])} RSS" href="{SITE['base']}/rss.xml">
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="/assets/css/style.css">
@@ -1648,9 +1650,14 @@ def build():
             raise SystemExit(f"중복 URL: {p['url']}")
         seen.add(p["url"])
         write_page(p)
-    # sitemap.xml
+    now = datetime.datetime.now(datetime.timezone.utc)
+    today = now.strftime("%Y-%m-%d")
+    rfc822 = now.strftime("%a, %d %b %Y %H:%M:%S +0000")
+
+    # sitemap.xml (lastmod 포함)
     urls = "".join(
         f"  <url><loc>{SITE['base']}{p['url']}</loc>"
+        f"<lastmod>{today}</lastmod>"
         f"<changefreq>weekly</changefreq>"
         f"<priority>{'1.0' if p['url']==SITE['main_url'] else '0.8'}</priority></url>\n"
         for p in PAGES
@@ -1660,16 +1667,60 @@ def build():
                f"{urls}</urlset>\n")
     with open(os.path.join(OUT, "sitemap.xml"), "w", encoding="utf-8") as f:
         f.write(sitemap)
-    # robots.txt
+
+    # rss.xml (피드)
+    items = "".join(
+        f"    <item>\n"
+        f"      <title>{esc(p['title'])}</title>\n"
+        f"      <link>{SITE['base']}{p['url']}</link>\n"
+        f"      <guid isPermaLink=\"true\">{SITE['base']}{p['url']}</guid>\n"
+        f"      <description>{esc(p['desc'])}</description>\n"
+        f"      <pubDate>{rfc822}</pubDate>\n"
+        f"    </item>\n"
+        for p in PAGES
+    )
+    rss = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+           '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n'
+           '  <channel>\n'
+           f"    <title>{esc(SITE['brand_full'])}</title>\n"
+           f"    <link>{SITE['base']}{SITE['main_url']}</link>\n"
+           f'    <atom:link href="{SITE["base"]}/rss.xml" rel="self" type="application/rss+xml"/>\n'
+           "    <description>서울 구로구 출장마사지·홈타이 방문형 관리 서비스 지역 안내</description>\n"
+           "    <language>ko-KR</language>\n"
+           f"    <lastBuildDate>{rfc822}</lastBuildDate>\n"
+           f"{items}"
+           "  </channel>\n</rss>\n")
+    with open(os.path.join(OUT, "rss.xml"), "w", encoding="utf-8") as f:
+        f.write(rss)
+
+    # robots.txt (구글·네이버 Yeti 허용 + 사이트맵/RSS)
     with open(os.path.join(OUT, "robots.txt"), "w", encoding="utf-8") as f:
-        f.write("User-agent: *\nAllow: /\n\n"
-                f"Sitemap: {SITE['base']}/sitemap.xml\n")
+        f.write(
+            "User-agent: *\nAllow: /\n\n"
+            "User-agent: Yeti\nAllow: /\n\n"          # 네이버 검색로봇
+            "User-agent: Googlebot\nAllow: /\n\n"
+            "User-agent: bingbot\nAllow: /\n\n"
+            f"Sitemap: {SITE['base']}/sitemap.xml\n"
+            f"Sitemap: {SITE['base']}/rss.xml\n"
+        )
+
+    # IndexNow 키 파일 ( {key}.txt 내용은 키 자체 )
+    key = SITE["indexnow_key"]
+    with open(os.path.join(OUT, f"{key}.txt"), "w", encoding="utf-8") as f:
+        f.write(key + "\n")
+
     # 메인 페이지는 루트(/)에서 생성되므로 루트 index.html은 곧 메인입니다.
     # 예전 메인 경로(/seoul/guro-gu-chuljangmassage/)는 루트로 301 리다이렉트(Cloudflare Pages _redirects)
     with open(os.path.join(OUT, "_redirects"), "w", encoding="utf-8") as f:
         f.write("/seoul/guro-gu-chuljangmassage/    /    301\n"
                 "/seoul/guro-gu-chuljangmassage     /    301\n")
-    print(f"생성 완료: {len(PAGES)} 페이지(메인=/) + sitemap.xml + robots.txt + _redirects")
+
+    # 모든 URL 목록 (tools/indexnow.py 등에서 사용)
+    with open(os.path.join(OUT, "urls.txt"), "w", encoding="utf-8") as f:
+        f.write("\n".join(SITE["base"] + p["url"] for p in PAGES) + "\n")
+
+    print(f"생성 완료: {len(PAGES)} 페이지(메인=/) + sitemap.xml + rss.xml + robots.txt "
+          f"+ {key}.txt(IndexNow) + urls.txt + _redirects")
 
 if __name__ == "__main__":
     build()
