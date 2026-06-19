@@ -140,6 +140,10 @@ def render_footer():
         <p>서울 구로구 방문형 관리 서비스(출장마사지·홈타이) 지역 안내 사이트입니다. 자택·숙소·사무실 인근 방문 가능 지역과 예약 전 확인사항을 안내합니다.</p>
         <p class="footer-phone"><a href="tel:{SITE['phone_tel']}">전화예약 {SITE['phone']}</a></p>
         <p>운영시간 {esc(SITE['hours'])}</p>
+        <div class="footer-cta">
+          <a class="btn btn--orange" href="https://t.me/googleseolab" target="_blank" rel="noopener">웹사이트 제작문의</a>
+          <a class="btn btn--orange" href="https://t.me/googleseolab" target="_blank" rel="noopener">제휴문의</a>
+        </div>
       </div>
       {cols}
     </div>
