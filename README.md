@@ -70,7 +70,7 @@ python3 build.py
 python build.py            # 변경 반영 + urls.txt 갱신
 python tools/indexnow.py   # 전체 URL 즉시 통보 (빙·네이버·얀덱스)
 # 특정 URL만:
-python tools/indexnow.py https://guro-massage1.pages.dev/seoul/guro/guro-dong-chuljangmassage/
+python tools/indexnow.py https://guro-massage1.netlify.app/seoul/guro/guro-dong-chuljangmassage/
 ```
 
 > IndexNow 키는 `build.py`의 `SITE["indexnow_key"]` 와 `tools/indexnow.py`의 `KEY` 가 동일해야 합니다.

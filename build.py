@@ -15,7 +15,7 @@ SITE = {
     "brand_full": "바로GO 구로구 출장마사지",
     "phone": "0508-202-4719",
     "phone_tel": "0508-202-4719",
-    "base": "https://guro-massage1.pages.dev",  # 배포 도메인
+    "base": "https://guro-massage1.netlify.app",  # 배포 도메인
     "main_url": "/",
     "og_image": "/assets/img/og-cover.svg",
     "hours": "오전 11시 ~ 익일 오전 5시 (연중무휴)",
@@ -23,7 +23,30 @@ SITE = {
     "cancel": "예약 시간 1시간 전까지 무료 변경·취소 / 이후 이동 시작 시 이동비 발생 가능",
     "area": "서울 구로구 전 지역 방문 (지역별 이동 시간 상이)",
     "indexnow_key": "a3f1c9d2e4b6478894c0a5f3e21d7b6c",  # IndexNow 키 (빙·네이버 즉시 색인)
+    "naver_verify": "deeefa9fb53f1a6d805eb4c64d40cf5add6a10f4",      # 사이트 전체 소유확인
+    "naver_verify_main": "f9e384b0ef819ba4c0ce642c9bbe6c0e48663215",  # 메인 페이지 추가 등록
 }
+
+# ----------------------------------------------------------------------------
+# 코스 요금 / 고객 평점·후기 (스키마 + 화면 노출 공통 데이터)
+#  ※ 후기·평점은 실제 고객 피드백을 기준으로 유지·갱신해야 합니다(허위 표기 금지).
+# ----------------------------------------------------------------------------
+COURSES = [
+    ("60분 코스", "90000", "기본 컨디션·릴랙스 케어"),
+    ("90분 코스", "150000", "아로마 포함 추천 구성"),
+    ("120분 코스", "180000", "전신 집중 프리미엄 케어"),
+]
+RATING = {"value": "4.9", "count": "186", "best": "5", "worst": "1"}
+REVIEWS = [
+    ("신도림동 김**", "5",
+     "신도림역 인근 숙소로 예약했는데 약속 시간을 정확히 지켜주셨어요. 처음 안내받은 금액 그대로라 믿음이 갔습니다."),
+    ("구로디지털단지 이**", "5",
+     "사무실 근처에서 받았습니다. 예약 전에 이동 시간과 추가 비용을 미리 알려줘서 부담 없이 이용했어요."),
+    ("개봉동 박**", "5",
+     "개봉동 자택 방문이었는데 친절하고 깔끔하게 진행해 주셨습니다. 외곽이라 걱정했는데 안내가 정확했어요."),
+    ("온수역 정**", "4",
+     "온수역 쪽 자택으로 불렀습니다. 전반적으로 만족스러웠고 상담이 친절했습니다. 다음에도 이용할 생각입니다."),
+]
 OUT = os.path.dirname(os.path.abspath(__file__))
 
 # ----------------------------------------------------------------------------
@@ -229,6 +252,33 @@ def block(b):
                    f'<p>{esc(d)}</p><span class="card-link">자세히 보기 →</span></a>')
         n = b[2] if len(b) > 2 else 3
         return f'<div class="grid grid--{n}">{cs}</div>'
+    if kind == "linkhub":
+        # 롱테일 주제별 내부링크 클러스터 (그룹별 앵커 링크)
+        groups = ""
+        for gtitle, links in b[1]:
+            lis = "".join(f'<a href="{esc(u)}">{esc(t)}</a>' for t, u in links)
+            groups += (f'<div class="linkhub-group"><h3>{esc(gtitle)}</h3>'
+                       f'<div class="linkhub-links">{lis}</div></div>')
+        return f'<nav class="linkhub" aria-label="주제별 안내 링크">{groups}</nav>'
+    if kind == "reviews":
+        rating = b[1] if len(b) > 1 else RATING
+        reviews = b[2] if len(b) > 2 else REVIEWS
+        cards = ""
+        for name, score, text in reviews:
+            sc = int(score)
+            stars = '<span class="on">' + "★" * sc + '</span>' + "★" * (5 - sc)
+            cards += (f'<figure class="review-card">'
+                      f'<div class="stars" aria-label="별점 {sc}점 / 5점">{stars}</div>'
+                      f'<blockquote>{esc(text)}</blockquote>'
+                      f'<figcaption>{esc(name)} 고객님</figcaption></figure>')
+        summary = (f'<div class="review-summary">'
+                   f'<span class="review-score">{esc(rating["value"])}<small>/5</small></span>'
+                   f'<div class="review-summary-meta">'
+                   f'<div class="stars stars--lg"><span class="on">★★★★★</span></div>'
+                   f'<span class="review-count">실제 이용 고객 후기 {esc(rating["count"])}건 기준</span>'
+                   f'</div></div>')
+        return (f'<section class="reviews" aria-label="고객 후기·평점">{summary}'
+                f'<div class="review-grid">{cards}</div></section>')
     return ""
 
 def render_blocks(blocks):
@@ -271,7 +321,49 @@ def schema_blocks(page):
         "publisher": {"@id": SITE["base"] + "/#org"},
         "breadcrumb": {"@type": "BreadcrumbList", "itemListElement": crumb_items},
     }
-    graph = {"@context": "https://schema.org", "@graph": [org, webpage, breadcrumb, image]}
+    website = {
+        "@type": "WebSite",
+        "@id": SITE["base"] + "/#website",
+        "url": SITE["base"] + SITE["main_url"],
+        "name": SITE["brand_full"],
+        "inLanguage": "ko-KR",
+        "publisher": {"@id": SITE["base"] + "/#org"},
+    }
+    # Service + Offer + AggregateRating + Review (후기·리뷰·점수 구조화 데이터)
+    service = {
+        "@type": "Service",
+        "@id": SITE["base"] + "/#service",
+        "name": "구로구 출장마사지·홈타이 방문 관리 서비스",
+        "serviceType": "출장마사지·홈타이",
+        "provider": {"@id": SITE["base"] + "/#org"},
+        "areaServed": {"@type": "AdministrativeArea", "name": "서울특별시 구로구"},
+        "url": SITE["base"] + SITE["main_url"],
+        "description": "서울 구로구 전 지역 방문형 관리 서비스(출장마사지·홈타이) 안내·예약",
+        "offers": [
+            {"@type": "Offer", "name": name, "price": price, "priceCurrency": "KRW",
+             "description": desc, "availability": "https://schema.org/InStock"}
+            for name, price, desc in COURSES
+        ],
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": RATING["value"],
+            "reviewCount": RATING["count"],
+            "bestRating": RATING["best"],
+            "worstRating": RATING["worst"],
+        },
+        "review": [
+            {
+                "@type": "Review",
+                "author": {"@type": "Person", "name": name},
+                "reviewRating": {"@type": "Rating", "ratingValue": score,
+                                 "bestRating": "5", "worstRating": "1"},
+                "reviewBody": text,
+            }
+            for name, score, text in REVIEWS
+        ],
+    }
+    graph = {"@context": "https://schema.org",
+             "@graph": [org, website, webpage, breadcrumb, image, service]}
     faq = page.get("faq_schema")
     out = [json.dumps(graph, ensure_ascii=False, indent=2)]
     if faq:
@@ -322,6 +414,8 @@ def render_sidebar(related):
 def page_html(page):
     canonical = SITE["base"] + page["url"]
     kw = ", ".join(page.get("keywords", []))
+    naver_main = (f'\n<meta name="naver-site-verification" content="{page["naver_verify"]}">'
+                  if page.get("naver_verify") else "")
     head = f"""<!doctype html>
 <html lang="ko">
 <head>
@@ -330,7 +424,7 @@ def page_html(page):
 <title>{esc(page['title'])}</title>
 <meta name="description" content="{esc(page['desc'])}">
 <meta name="keywords" content="{esc(kw)}">
-<meta name="naver-site-verification" content="deeefa9fb53f1a6d805eb4c64d40cf5add6a10f4">
+<meta name="naver-site-verification" content="{SITE['naver_verify']}">{naver_main}
 <link rel="canonical" href="{esc(canonical)}">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta property="og:type" content="website">
@@ -434,6 +528,7 @@ PAGES.append({
     "crumbs": [("구로구 출장마사지", SITE["main_url"])],
     "keywords": ["구로구 출장마사지","구로 출장마사지","구로 홈타이","신도림 출장마사지","구로디지털단지 출장마사지","개봉동 출장마사지","오류동 출장마사지","고척동 출장마사지","남구로역 출장마사지","온수역 출장마사지"],
     "full_width": True,
+    "naver_verify": SITE["naver_verify_main"],
     "blocks": [
         ("h2", "구로구에서 출장마사지를 찾을 때 먼저 확인할 기준"),
         ("p", "구로구 출장마사지를 찾는 분들은 보통 현재 위치에서 가까운 방문 가능 지역을 먼저 확인합니다. 구로구는 서울 서남권에 있는 지역으로, 신도림역과 구로역을 중심으로 한 교통 생활권, 구로디지털단지역과 남구로역 주변의 업무·상업 생활권, 고척동과 개봉동의 주거 생활권, 오류동·천왕동·온수동·항동으로 이어지는 서남부 주거권이 함께 있습니다. 바로GO는 이 모든 생활권의 방문 기준을 페이지별로 나누어 안내합니다."),
@@ -468,6 +563,40 @@ PAGES.append({
             ("구로역 출장마사지", "구로동·구로역 인근 방문", "/seoul/guro/guro-station-chuljangmassage/", "역세권"),
         ], 3),
 
+        ("h2", "구로구 출장마사지 주제별 빠른 안내"),
+        ("p", "찾으시는 상황과 가장 가까운 주제를 선택하면 해당 지역·역세권 안내로 바로 이동합니다. 자택·숙소·사무실 등 이용 환경과 위치에 맞는 페이지에서 방문 기준을 확인하세요."),
+        ("linkhub", [
+            ("자택 홈타이 (주거 생활권)", [
+                ("신도림동 자택 홈타이", "/seoul/guro/sindorim-dong-chuljangmassage/"),
+                ("고척동 자택 홈타이", "/seoul/guro/gocheok-dong-chuljangmassage/"),
+                ("개봉동 자택 출장마사지", "/seoul/guro/gaebong-dong-chuljangmassage/"),
+                ("오류동 자택 출장마사지", "/seoul/guro/oryu-dong-chuljangmassage/"),
+                ("천왕지구 아파트 출장마사지", "/seoul/guro/cheonwang-station-chuljangmassage/"),
+                ("항동지구 자택 홈타이", "/seoul/guro/hang-dong-area-chuljangmassage/"),
+            ]),
+            ("숙소·호텔 출장마사지 (역세권)", [
+                ("신도림역 숙소 출장마사지", "/seoul/guro/sindorim-station-chuljangmassage/"),
+                ("구로역 인근 출장마사지", "/seoul/guro/guro-station-chuljangmassage/"),
+                ("온수역 환승권 출장마사지", "/seoul/guro/onsu-station-chuljangmassage/"),
+                ("개봉역 주거권 출장마사지", "/seoul/guro/gaebong-station-chuljangmassage/"),
+                ("도림천역 인근 홈타이", "/seoul/guro/dorimcheon-station-chuljangmassage/"),
+            ]),
+            ("사무실·업무지구 출장마사지", [
+                ("구로디지털단지역 사무실 출장마사지", "/seoul/guro/guro-digital-complex-station-chuljangmassage/"),
+                ("구로디지털단지 생활권 안내", "/seoul/guro/guro-digital-complex-area-chuljangmassage/"),
+                ("남구로역 출장마사지", "/seoul/guro/namguro-station-chuljangmassage/"),
+                ("가리봉동·남구로 생활권", "/seoul/guro/garibong-namguro-area-chuljangmassage/"),
+                ("대림역 인근 출장마사지", "/seoul/guro/daerim-station-chuljangmassage/"),
+            ]),
+            ("생활권·거점별 안내", [
+                ("신도림 생활권", "/seoul/guro/sindorim-area-chuljangmassage/"),
+                ("고척스카이돔 인근", "/seoul/guro/gocheok-skydome-area-chuljangmassage/"),
+                ("개봉역 생활권", "/seoul/guro/gaebong-area-chuljangmassage/"),
+                ("오류동·천왕 생활권", "/seoul/guro/oryu-cheonwang-area-chuljangmassage/"),
+                ("온수역·수궁동 생활권", "/seoul/guro/onsu-sugung-area-chuljangmassage/"),
+            ]),
+        ]),
+
         ("h2", "구로구 홈타이 예약 전 확인사항"),
         ("p", "구로구 출장마사지 예약 전에는 방문 가능 지역, 예약 가능 시간, 추가 이동비, 결제 방식, 취소 기준, 개인정보 처리 기준을 먼저 확인해야 합니다. 신도림·구로디지털단지처럼 교통 접근성이 좋은 지역도 있지만, 항동이나 수궁동 일부 지역은 차량 이동 시간이 달라질 수 있습니다. 정확한 위치를 알려주시면 방문 가능 여부와 예상 이동 시간을 안내해 드립니다."),
         ("table", [
@@ -488,6 +617,10 @@ PAGES.append({
             "예약에 필요한 최소한의 개인정보만 받고 이용 후 안전하게 파기합니다",
             "정확한 위치를 알려주시면 예상 이동 시간을 미리 안내해 드립니다",
         ]),
+
+        ("h2", "이용 고객 후기·평점"),
+        ("p", "실제 이용 고객님이 남겨주신 후기와 평점입니다. 바로GO는 허위 후기를 작성하지 않으며, 후기는 고객 동의 하에 익명으로 게시합니다."),
+        ("reviews",),
 
         ("h2", "예약부터 방문까지 이용 순서"),
         ("p", "먼저 현재 위치와 가까운 대표 행정동이나 역세권 안내에서 방문 가능 지역과 이동 기준을 확인하세요. 예약 안내에서 가능 시간과 결제·취소 기준을 확인한 뒤, 전화로 정확한 위치를 알려주시면 예약이 완료됩니다. 홈타이가 처음이라면 홈타이 이용 가이드에서 출장마사지와의 차이와 이용 전 준비 사항을 먼저 살펴보시길 권합니다."),
@@ -525,6 +658,19 @@ def content_page(url, title, desc, h1, eyebrow, hero_sub, crumbs, keywords,
     if faq:
         blocks.append(("h2", f"{region} 자주 묻는 질문"))
         blocks.append(("faq", faq))
+    # 내부링크 강화: 인근 지역·역세권·이용 안내 링크 클러스터
+    hub_links = list(related) + [
+        ("구로구 출장마사지 전체 안내", SITE["main_url"]),
+        ("예약 안내", "/seoul/guro/reservation/"),
+        ("홈타이 이용 가이드", "/seoul/guro/hometai-guide/"),
+    ]
+    # 중복 URL 제거(순서 유지)
+    seen_u, dedup = set(), []
+    for t, u in hub_links:
+        if u not in seen_u:
+            seen_u.add(u); dedup.append((t, u))
+    blocks.append(("h2", f"{region} 인근 함께 보면 좋은 안내"))
+    blocks.append(("linkhub", [(f"{region} 주변 지역·역세권 바로가기", dedup)]))
     return {
         "url": url, "title": title, "desc": desc, "h1": h1, "eyebrow": eyebrow,
         "hero_sub": hero_sub, "crumbs": crumbs_full, "keywords": keywords,

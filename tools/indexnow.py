@@ -11,7 +11,7 @@ IndexNow 즉시 색인 통보 — 빙(Bing) + 네이버(Naver) + Yandex
 """
 import sys, os, json, urllib.request, urllib.error
 
-HOST = "guro-massage1.pages.dev"
+HOST = "guro-massage1.netlify.app"
 BASE = f"https://{HOST}"
 KEY = "a3f1c9d2e4b6478894c0a5f3e21d7b6c"
 KEY_LOCATION = f"{BASE}/{KEY}.txt"
